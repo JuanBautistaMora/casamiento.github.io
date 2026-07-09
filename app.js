@@ -1,13 +1,12 @@
 /* ==========================================================================
-   APP.JS — Lista de regalos de casamiento
+   APP.JS — Lista de regalos de casamiento con transferencias
    ========================================================================== */
-
 (function () {
   "use strict";
 
   const CONFIG = {
     SUPABASE_URL: "https://qdcezlxwnnfjwhceoybe.supabase.co",
-    SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2V6bHh3bm5mandoY2VveWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NTkxNzEsImV4cCI6MjA5OTEzNTE3MX0.ubCmhihpJ5uUNDKFVoljcLtYuAGZ0IaMq8Jxm6qYx_U",
+    SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InFkY2V6bHh3bm5mandoY2VveWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NTkxNzEsImV4cCI6MjA5OTEzNTE3MX0.ubCmhihpJ5uUNDKFVoljcLtYuAGZ0IaMq8Jxm6qYx_U",
     CURRENCY: "ARS",
   };
 
@@ -21,82 +20,6 @@
   let selectedGiftId = null;
   let selectedAmount = null;
 
-  async function getDonations() {
-    const { data, error } = await supabaseClient
-      .from("donations")
-      .select("*")
-      .eq("status", "confirmed")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return data.map((d) => ({
-      id: d.id,
-      giftId: d.gift_id,
-      amount: Number(d.amount),
-      guestName: d.guest_name,
-      message: d.message,
-      createdAt: d.created_at,
-    }));
-  }
-
-  async function getGifts() {
-    const { data, error } = await supabaseClient
-      .from("gifts")
-      .select("*")
-      .order("created_at", { ascending: true });
-
-    if (error) throw error;
-
-    donationsState = await getDonations();
-
-    return data.map((g) => {
-      const raisedFromDonations = donationsState
-        .filter((d) => d.giftId === g.id)
-        .reduce((total, d) => total + d.amount, 0);
-
-      return {
-        id: g.id,
-        name: g.name,
-        description: g.description,
-        icon: g.icon,
-        targetAmount: Number(g.target_amount),
-        raisedAmount: raisedFromDonations,
-        suggestedAmounts: g.suggested_amounts || [],
-      };
-    });
-  }
-
-  async function createDonation({ giftId, amount, guestName, message }) {
-    if (!giftId) throw new Error("Falta el regalo seleccionado.");
-    if (!amount || amount < 500) throw new Error("El monto mínimo es de $500.");
-
-    const safeName = guestName?.trim() || "Anónimo";
-    const safeMessage = message?.trim() || "";
-
-    const { data, error } = await supabaseClient
-      .from("donations")
-      .insert({
-        gift_id: giftId,
-        amount,
-        guest_name: safeName.slice(0, 80),
-        message: safeMessage.slice(0, 280),
-        status: "confirmed",
-      })
-      .select("*")
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  async function refreshAll() {
-    const gifts = await getGifts();
-    giftsState = gifts;
-    renderGiftsList(gifts);
-    renderMessagesList(donationsState);
-  }
-
   const currencyFormatter = new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: CONFIG.CURRENCY,
@@ -104,12 +27,85 @@
   });
 
   function formatMoney(amount) {
-    return currencyFormatter.format(amount || 0);
+    return currencyFormatter.format(Number(amount || 0));
   }
 
   function calcPercent(gift) {
     if (!gift.targetAmount) return 0;
-    return Math.min(100, Math.round((gift.raisedAmount / gift.targetAmount) * 100));
+    return Math.min(100, Math.round((Number(gift.raisedAmount || 0) / Number(gift.targetAmount)) * 100));
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str ?? "";
+    return div.innerHTML;
+  }
+
+  function normalizeGift(gift, raisedAmount = 0) {
+    return {
+      id: gift.id,
+      name: gift.name,
+      description: gift.description,
+      icon: gift.icon,
+      targetAmount: Number(gift.target_amount || 0),
+      raisedAmount: Number(raisedAmount || 0),
+      suggestedAmounts: gift.suggested_amounts || [],
+    };
+  }
+
+  function normalizeDonation(donation) {
+    return {
+      id: donation.id,
+      giftId: donation.gift_id,
+      amount: Number(donation.amount || 0),
+      guestName: donation.guest_name,
+      message: donation.message,
+      createdAt: donation.created_at,
+    };
+  }
+
+  async function getDonations() {
+    const { data, error } = await supabaseClient
+      .from("donations")
+      .select("id, gift_id, amount, guest_name, message, created_at, status")
+      .eq("status", "confirmed")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map(normalizeDonation);
+  }
+
+  async function getGifts() {
+    const [{ data: gifts, error: giftsError }, donations] = await Promise.all([
+      supabaseClient.from("gifts").select("id, name, description, icon, target_amount, suggested_amounts, created_at").order("created_at", { ascending: true }),
+      getDonations(),
+    ]);
+
+    if (giftsError) throw giftsError;
+
+    const totalsByGift = donations.reduce((acc, donation) => {
+      acc[donation.giftId] = (acc[donation.giftId] || 0) + donation.amount;
+      return acc;
+    }, {});
+
+    donationsState = donations;
+    return (gifts || []).map((gift) => normalizeGift(gift, totalsByGift[gift.id] || 0));
+  }
+
+  async function createDonation({ giftId, amount, guestName, message }) {
+    if (!giftId) throw new Error("Falta el regalo seleccionado.");
+    if (!amount || amount < 500) throw new Error("El monto mínimo es $500.");
+
+    const { error } = await supabaseClient.from("donations").insert({
+      gift_id: giftId,
+      amount: Number(amount),
+      guest_name: guestName || "Anónimo",
+      message: message || null,
+      status: "confirmed",
+    });
+
+    if (error) throw error;
+    return true;
   }
 
   const giftsGrid = document.getElementById("giftsGrid");
@@ -127,7 +123,7 @@
 
     card.innerHTML = `
       ${isComplete ? `<span class="gift-card__badge">Completo 🎉</span>` : ""}
-      <div class="gift-card__icon" aria-hidden="true">${gift.icon}</div>
+      <div class="gift-card__icon" aria-hidden="true">${gift.icon || "💌"}</div>
       <h3 class="gift-card__name">${escapeHtml(gift.name)}</h3>
       <p class="gift-card__desc">${escapeHtml(gift.description)}</p>
 
@@ -146,18 +142,17 @@
       </div>
 
       <button class="btn btn--primary gift-card__cta" data-action="open-donate" data-gift-id="${gift.id}">
-        Aportar
+        Ya transferí / Dejar mensaje
       </button>
     `;
 
     return card;
   }
 
-  function renderGiftsList(gifts) {
-    giftsLoading?.remove();
+  function renderGiftsFromState() {
     giftsGrid.innerHTML = "";
     const fragment = document.createDocumentFragment();
-    gifts.forEach((gift) => fragment.appendChild(createGiftCard(gift)));
+    giftsState.forEach((gift) => fragment.appendChild(createGiftCard(gift)));
     giftsGrid.appendChild(fragment);
   }
 
@@ -175,11 +170,9 @@
     return el;
   }
 
-  function renderMessagesList(donations) {
-    messagesLoading?.remove();
+  function renderMessagesFromState() {
     messagesList.innerHTML = "";
-
-    const withMessages = donations.filter((d) => d.message && d.message.trim().length > 0);
+    const withMessages = donationsState.filter((d) => d.message && d.message.trim().length > 0);
 
     if (withMessages.length === 0) {
       const empty = document.createElement("p");
@@ -192,6 +185,22 @@
     const fragment = document.createDocumentFragment();
     withMessages.forEach((d) => fragment.appendChild(createMessageCard(d)));
     messagesList.appendChild(fragment);
+  }
+
+  async function refreshPageData() {
+    giftsState = await getGifts();
+    renderGiftsFromState();
+    renderMessagesFromState();
+  }
+
+  async function initPage() {
+    try {
+      await refreshPageData();
+    } catch (err) {
+      if (giftsLoading) giftsLoading.textContent = "No pudimos cargar los regalos. Revisá las políticas de Supabase.";
+      if (messagesLoading) messagesLoading.textContent = "No pudimos cargar los mensajes.";
+      console.error(err);
+    }
   }
 
   const modalOverlay = document.getElementById("donationModal");
@@ -288,25 +297,25 @@
     }
 
     continueBtn.disabled = true;
-    continueBtn.textContent = "Guardando aporte…";
+    continueBtn.textContent = "Guardando…";
 
     try {
       await createDonation({
         giftId: selectedGiftId,
         amount: selectedAmount,
-        guestName: guestNameInput.value,
-        message: guestMessageInput.value,
+        guestName: guestNameInput.value.trim(),
+        message: guestMessageInput.value.trim(),
       });
 
       closeModal();
-      showToast("¡Gracias! Tu aporte y mensaje ya aparecen en la página 💛");
-      await refreshAll();
+      showToast("¡Gracias! Tu aporte y mensaje ya quedaron registrados 💛");
+      await refreshPageData();
     } catch (err) {
       console.error(err);
-      showError("No pudimos guardar el aporte. Revisá la conexión o las políticas de Supabase.");
+      showError("No se pudo guardar. Revisá las políticas de Supabase o intentá de nuevo.");
     } finally {
       continueBtn.disabled = false;
-      continueBtn.textContent = "Confirmar aporte";
+      continueBtn.textContent = "Confirmar transferencia";
     }
   });
 
@@ -322,29 +331,25 @@
     toast.textContent = msg;
     toast.classList.add("is-visible");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 4200);
+    toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 3800);
   }
 
-  function escapeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str ?? "";
-    return div.innerHTML;
-  }
-
-  function subscribeToDonations() {
+  function subscribeToRealtime() {
     supabaseClient
-      .channel("public-donations")
+      .channel("donations-live")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "donations" },
-        () => refreshAll()
+        () => refreshPageData()
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "donations" },
+        () => refreshPageData()
       )
       .subscribe();
   }
 
-  refreshAll().then(subscribeToDonations).catch((err) => {
-    console.error(err);
-    if (giftsLoading) giftsLoading.textContent = "No pudimos cargar los regalos.";
-    if (messagesLoading) messagesLoading.textContent = "No pudimos cargar los mensajes.";
-  });
+  initPage();
+  subscribeToRealtime();
 })();
