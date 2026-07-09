@@ -55,11 +55,11 @@
   };
 
   /* ------------------------------------------------------------------
-     DATOS DE PRUEBA (mock)
+     DATOS DE PRUEBA (mock) — YA NO SE USAN
      ------------------------------------------------------------------
-     Reemplazar por datos reales apenas exista el backend. La forma
-     (shape) de estos objetos es el "contrato" que tu API debería
-     respetar para que el resto del frontend funcione sin cambios.
+     Se dejan acá solo como referencia de la forma (shape) que tienen
+     que tener los datos. getGifts()/getDonations() ahora traen los
+     datos reales desde Supabase (ver CLIENTE DE SUPABASE más abajo).
      ------------------------------------------------------------------ */
   const MOCK_GIFTS = [
     {
@@ -125,11 +125,24 @@
     { id: "d4", giftId: "fondo-libre", guestName: "Tío Carlos", message: "¡Salud por los novios! Nos vemos en la fiesta 🥂", amount: 8000, createdAt: "2026-06-20" },
   ];
 
-  // Estado en memoria (simula lo que después vendría del backend)
-  let giftsState = JSON.parse(JSON.stringify(MOCK_GIFTS));
-  let donationsState = JSON.parse(JSON.stringify(MOCK_DONATIONS));
+  // Estado en memoria (se llena con lo que devuelvan getGifts/getDonations)
+  let giftsState = [];
+  let donationsState = [];
   let selectedGiftId = null;
   let selectedAmount = null;
+
+  /* ------------------------------------------------------------------
+     CLIENTE DE SUPABASE
+     ------------------------------------------------------------------
+     Usa la anon key (pública), pensada para el navegador. Junto con las
+     políticas de RLS que ya creaste (gifts_select, donations_select_confirmed),
+     esto solo permite LEER datos, nunca escribir donaciones "confirmed"
+     desde acá.
+     ------------------------------------------------------------------ */
+  const supabaseClient = window.supabase.createClient(
+    CONFIG.SUPABASE_URL,
+    CONFIG.SUPABASE_ANON_KEY
+  );
 
   /* ==================================================================
      CAPA DE DATOS — funciones para conectar con el backend
@@ -150,14 +163,20 @@
    *   supabase.from('gifts').select('*')
    */
   async function getGifts() {
-    // --- MOCK (borrar cuando haya backend) ---
-    await simulateNetworkDelay();
-    return giftsState;
+    const { data, error } = await supabaseClient.from("gifts").select("*");
+    if (error) throw error;
 
-    // --- EJEMPLO REAL (descomentar y adaptar) ---
-    // const res = await fetch(`${CONFIG.API_BASE_URL}/gifts`);
-    // if (!res.ok) throw new Error("No se pudieron cargar los regalos");
-    // return await res.json();
+    // Traduce las columnas snake_case de la tabla al "contrato" que
+    // espera el resto del frontend (targetAmount, raisedAmount, etc).
+    return data.map((g) => ({
+      id: g.id,
+      name: g.name,
+      description: g.description,
+      icon: g.icon,
+      targetAmount: g.target_amount,
+      raisedAmount: g.raised_amount,
+      suggestedAmounts: g.suggested_amounts,
+    }));
   }
 
   /**
@@ -169,14 +188,20 @@
    *   status "pending" como si estuvieran confirmadas.
    */
   async function getDonations() {
-    // --- MOCK ---
-    await simulateNetworkDelay();
-    return donationsState;
+    const { data, error } = await supabaseClient
+      .from("donations")
+      .select("*")
+      .eq("status", "confirmed");
+    if (error) throw error;
 
-    // --- EJEMPLO REAL ---
-    // const res = await fetch(`${CONFIG.API_BASE_URL}/donations?status=confirmed`);
-    // if (!res.ok) throw new Error("No se pudieron cargar los mensajes");
-    // return await res.json();
+    return data.map((d) => ({
+      id: d.id,
+      giftId: d.gift_id,
+      amount: d.amount,
+      guestName: d.guest_name,
+      message: d.message,
+      createdAt: d.created_at,
+    }));
   }
 
   /**
