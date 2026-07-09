@@ -351,5 +351,5 @@
   }
 
   initPage();
-  subscribeToRealtime();
+ // subscribeToRealtime();
 })();
