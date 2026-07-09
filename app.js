@@ -142,7 +142,7 @@
       </div>
 
       <button class="btn btn--primary gift-card__cta" data-action="open-donate" data-gift-id="${gift.id}">
-        Ya transferí / Dejar mensaje
+        Regalar
       </button>
     `;
 
