@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Martina & Lucas — Lista de regalos</title>
+<meta name="description" content="Ayudanos a construir nuestra nueva vida juntos. Elegí un regalo simbólico para Martina & Lucas.">
+
+<!-- Tipografías: Cormorant Garamond (display, romántica) + Jost (utilitaria, limpia) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- FONDO DECORATIVO (manchas de color difuminadas, puramente visual) -->
+<!-- ============================================================ -->
+<div class="bg-blob bg-blob--one" aria-hidden="true"></div>
+<div class="bg-blob bg-blob--two" aria-hidden="true"></div>
+<div class="bg-blob bg-blob--three" aria-hidden="true"></div>
+
+<!-- ============================================================ -->
+<!-- HERO -->
+<!-- ============================================================ -->
+<header class="hero" id="inicio">
+  <p class="hero__eyebrow">Nos casamos</p>
+  <h1 class="hero__names">
+    <span class="hero__name">Martina</span>
+    <span class="hero__amp" aria-hidden="true">&amp;</span>
+    <span class="hero__name">Lucas</span>
+  </h1>
+
+  <div class="hero__divider" aria-hidden="true">
+    <svg viewBox="0 0 200 24" class="flourish">
+      <path d="M0 12 C40 12 40 4 70 4 C90 4 90 20 100 20 C110 20 110 4 130 4 C160 4 160 12 200 12" />
+      <circle cx="100" cy="12" r="3.5" class="flourish__dot"/>
+    </svg>
+  </div>
+
+  <p class="hero__date">14 de marzo de 2027 · Buenos Aires</p>
+  <p class="hero__welcome">
+    Gracias por acompañarnos en este nuevo capítulo. En vez de regalos tradicionales,
+    preparamos esta pequeña lista de sueños compartidos: elegí el que más te guste
+    y ayudanos a hacerlo realidad, con el monto que quieras.
+  </p>
+  <a href="#regalos" class="btn btn--ghost hero__cta">Ver los regalos ↓</a>
+</header>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN DE REGALOS -->
+<!-- ============================================================ -->
+<main>
+<section class="gifts" id="regalos">
+  <div class="section-heading">
+    <p class="section-heading__eyebrow">Lista de regalos</p>
+    <h2 class="section-heading__title">Elegí un sueño para ayudarnos a cumplir</h2>
+    <p class="section-heading__subtitle">
+      Cada aporte, grande o chico, suma directo al objetivo. Podés donar de forma anónima
+      o dejarnos un mensaje lindo para el día especial.
+    </p>
+  </div>
+
+  <!--
+    GIFTS_GRID
+    ------------------------------------------------------------------
+    Este contenedor se llena dinámicamente desde app.js con la función
+    renderGifts(), que a su vez consume los datos de getGifts().
+    No hay tarjetas hardcodeadas acá a propósito: todo el HTML de cada
+    tarjeta se genera en JS para que el día de mañana getGifts() pueda
+    traer datos reales de Supabase sin tocar este archivo.
+  -->
+  <div class="gifts__grid" id="giftsGrid" aria-live="polite">
+    <!-- Tarjetas de regalo inyectadas por JS (ver createGiftCard() en app.js) -->
+    <p class="gifts__loading" id="giftsLoading">Cargando regalos…</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- MODAL DE DONACIÓN -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="donationModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal__close" id="modalClose" aria-label="Cerrar">✕</button>
+
+    <p class="modal__eyebrow">Regalar</p>
+    <h3 class="modal__title" id="modalTitle">—</h3>
+    <p class="modal__gift-desc" id="modalGiftDesc">—</p>
+
+    <div class="modal__progress-mini">
+      <div class="progress-bar progress-bar--mini">
+        <div class="progress-bar__fill" id="modalProgressFill"></div>
+      </div>
+      <span id="modalProgressText">—</span>
+    </div>
+
+    <form id="donationForm" novalidate>
+      <fieldset class="modal__amounts">
+        <legend>Elegí un monto (ARS)</legend>
+        <div class="amount-options" id="amountOptions">
+          <!-- Botones de monto sugerido, generados en JS -->
+        </div>
+        <label class="modal__field" for="customAmount">
+          O ingresá otro monto
+          <input type="number" min="500" step="500" id="customAmount" name="customAmount" placeholder="Ej: 15000">
+        </label>
+      </fieldset>
+
+      <label class="modal__field" for="guestName">
+        Tu nombre <span class="modal__optional">(opcional)</span>
+        <input type="text" id="guestName" name="guestName" placeholder="¿Cómo querés que aparezcas?">
+      </label>
+
+      <label class="modal__field" for="guestMessage">
+        Mensaje para los novios <span class="modal__optional">(opcional)</span>
+        <textarea id="guestMessage" name="guestMessage" rows="3" maxlength="280" placeholder="Les deseamos toda la felicidad del mundo…"></textarea>
+      </label>
+
+      <p class="modal__error" id="modalError" role="alert" hidden></p>
+
+      <button type="submit" class="btn btn--primary modal__submit" id="continueToPayment">
+        Continuar al pago
+      </button>
+      <p class="modal__disclaimer">
+        Vas a ser redirigido/a a una pasarela de pago segura. Todavía no procesamos
+        pagos reales: esto es una vista de demostración.
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MENSAJES DE INVITADOS -->
+<!-- ============================================================ -->
+<section class="messages" id="mensajes">
+  <div class="section-heading">
+    <p class="section-heading__eyebrow">Con cariño</p>
+    <h2 class="section-heading__title">Mensajes de nuestros invitados</h2>
+  </div>
+
+  <!--
+    MESSAGES_LIST
+    ------------------------------------------------------------------
+    Se completa desde app.js con renderMessages(), que consume
+    getDonations() filtrando las que tengan mensaje visible.
+  -->
+  <div class="messages__list" id="messagesList">
+    <p class="messages__loading" id="messagesLoading">Cargando mensajes…</p>
+  </div>
+</section>
+</main>
+
+<!-- ============================================================ -->
+<!-- FOOTER -->
+<!-- ============================================================ -->
+<footer class="footer">
+  <div class="footer__divider" aria-hidden="true">
+    <svg viewBox="0 0 200 24" class="flourish flourish--footer">
+      <path d="M0 12 C40 12 40 4 70 4 C90 4 90 20 100 20 C110 20 110 4 130 4 C160 4 160 12 200 12" />
+      <circle cx="100" cy="12" r="3.5" class="flourish__dot"/>
+    </svg>
+  </div>
+  <p class="footer__names">Martina &amp; Lucas</p>
+  <p class="footer__note">14 de marzo de 2027 · Con todo nuestro cariño, gracias por ser parte</p>
+  <p class="footer__legal">Los pagos son procesados por una pasarela externa. Ningún dato de pago se almacena en este sitio.</p>
+</footer>
+
+<!-- Toast de confirmación (feedback visual liviano, sin backend) -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
