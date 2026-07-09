@@ -48,8 +48,8 @@
     // 🔌 BACKEND AQUÍ: si usás Supabase directo desde el cliente para LEER
     // datos públicos (no para escribir pagos), estas son las credenciales
     // públicas del proyecto. Se consiguen en Supabase > Project Settings > API.
-    SUPABASE_URL: "https://TU-PROYECTO.supabase.co",
-    SUPABASE_ANON_KEY: "TU_SUPABASE_ANON_KEY",
+    SUPABASE_URL: "https://qdcezlxwnnfjwhceoybe.supabase.co",
+    SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2V6bHh3bm5mandoY2VveWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NTkxNzEsImV4cCI6MjA5OTEzNTE3MX0.ubCmhihpJ5uUNDKFVoljcLtYuAGZ0IaMq8Jxm6qYx_U",
 
     CURRENCY: "ARS",
   };
