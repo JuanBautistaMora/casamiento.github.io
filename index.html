@@ -104,6 +104,19 @@
       <span id="modalProgressText">—</span>
     </div>
 
+    <div class="transfer-box">
+      <p class="transfer-box__title">Datos para transferir</p>
+      <div class="transfer-box__row">
+        <span>Alias</span>
+        <strong>ALIAS.DE.LOS.NOVIOS</strong>
+      </div>
+      <div class="transfer-box__row">
+        <span>CBU/CVU</span>
+        <strong>0000000000000000000000</strong>
+      </div>
+      <p class="transfer-box__note">Después de transferir, cargá abajo el monto que enviaste y dejá tu mensaje.</p>
+    </div>
+
     <form id="donationForm" novalidate>
       <fieldset class="modal__amounts">
         <legend>Elegí un monto (ARS)</legend>
@@ -129,11 +142,11 @@
       <p class="modal__error" id="modalError" role="alert" hidden></p>
 
       <button type="submit" class="btn btn--primary modal__submit" id="continueToPayment">
-        Continuar al pago
+        Confirmar aporte
       </button>
       <p class="modal__disclaimer">
-        Vas a ser redirigido/a a una pasarela de pago segura. Todavía no procesamos
-        pagos reales: esto es una vista de demostración.
+        Al confirmar, el monto se suma a la barra y tu mensaje aparece en la página.
+        Reemplazá el alias y CBU/CVU por los datos reales de los novios.
       </p>
     </form>
   </div>
@@ -185,7 +198,7 @@
   </div>
   <p class="footer__names">Natalia &amp; Joel</p>
   <p class="footer__note">12 de diciembre de 2026 · Ascochinga, Córdoba · Gracias por ser parte</p>
-  <p class="footer__legal">Los pagos son procesados por una pasarela externa. Ningún dato de pago se almacena en este sitio.</p>
+  <p class="footer__legal">Los aportes se realizan por transferencia. Esta página solo registra el monto informado y los mensajes de los invitados.</p>
 </footer>
 
 <!-- Toast de confirmación (feedback visual liviano, sin backend) -->
