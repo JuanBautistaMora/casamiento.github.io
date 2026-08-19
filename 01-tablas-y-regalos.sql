@@ -1,6 +1,6 @@
--- Lista de regalos de Natalia y Joel
--- Ejecutar completo en Supabase > SQL Editor.
--- Es idempotente: puede volver a ejecutarse sin duplicar regalos ni borrar aportes.
+-- REEMPLAZA COMPLETAMENTE EL PRIMER CÓDIGO:
+-- create table gifts (...) + create table donations (...) + insert into gifts (...)
+-- Ejecutar en Supabase > SQL Editor.
 
 create extension if not exists pgcrypto;
 
@@ -31,7 +31,7 @@ create index if not exists donations_gift_status_idx
   on public.donations (gift_id, status);
 
 -- target_amount = 0 significa "sin objetivo determinado".
--- Las descripciones se dejan en NULL porque no se muestran en la página.
+-- No se borran regalos ni aportes anteriores.
 insert into public.gifts (
   id,
   name,
@@ -60,82 +60,3 @@ on conflict (id) do update set
   target_amount = excluded.target_amount,
   suggested_amounts = excluded.suggested_amounts;
 
-alter table public.gifts enable row level security;
-alter table public.donations enable row level security;
-
-drop policy if exists "gifts_select" on public.gifts;
-drop policy if exists "donations_select_confirmed" on public.donations;
-drop policy if exists "donations_insert" on public.donations;
-
-create policy "gifts_select"
-on public.gifts
-for select
-to anon
-using (
-  id = any (array[
-    'juego-comedor',
-    'sillon',
-    'vajilla-completa',
-    'mesas-luz',
-    'sommier',
-    'ropa-cama',
-    'ramo-novia',
-    'flores-iglesia',
-    'alianzas',
-    'fondo-novios',
-    'luna-miel'
-  ]::text[])
-);
-
-create policy "donations_select_confirmed"
-on public.donations
-for select
-to anon
-using (
-  status = 'confirmed'
-  and gift_id = any (array[
-    'juego-comedor',
-    'sillon',
-    'vajilla-completa',
-    'mesas-luz',
-    'sommier',
-    'ropa-cama',
-    'ramo-novia',
-    'flores-iglesia',
-    'alianzas',
-    'fondo-novios',
-    'luna-miel'
-  ]::text[])
-);
-
--- El visitante solo puede informar una transferencia como pendiente.
--- La confirmación debe hacerse desde el panel de Supabase después de verificarla.
-create policy "donations_insert"
-on public.donations
-for insert
-to anon
-with check (
-  status = 'pending'
-  and gift_id = any (array[
-    'juego-comedor',
-    'sillon',
-    'vajilla-completa',
-    'mesas-luz',
-    'sommier',
-    'ropa-cama',
-    'ramo-novia',
-    'flores-iglesia',
-    'alianzas',
-    'fondo-novios',
-    'luna-miel'
-  ]::text[])
-  and amount >= 500
-  and amount <= 5000000
-  and length(coalesce(guest_name, '')) <= 80
-  and length(coalesce(message, '')) <= 280
-);
-
-revoke all on table public.gifts from anon;
-revoke all on table public.donations from anon;
-grant select on table public.gifts to anon;
-grant select, insert on table public.donations to anon;

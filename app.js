@@ -128,7 +128,7 @@
       amount: Number(amount),
       guest_name: guestName || "Anónimo",
       message: message || null,
-      status: "pending",
+      status: "confirmed",
     });
 
     if (error) throw error;
@@ -355,13 +355,14 @@
       });
 
       closeModal();
-      showToast("¡Gracias! Registramos tu aporte y lo confirmaremos al verificar la transferencia.");
+      showToast("¡Gracias! Tu aporte y mensaje ya quedaron registrados 💛");
+      await refreshPageData();
     } catch (err) {
       console.error(err);
       showError("No se pudo guardar. Revisá las políticas de Supabase o intentá de nuevo.");
     } finally {
       continueBtn.disabled = false;
-      continueBtn.textContent = "Ya transferí este monto";
+      continueBtn.textContent = "Confirmar aporte";
     }
   });
 
