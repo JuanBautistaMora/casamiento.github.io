@@ -10,7 +10,6 @@
     CURRENCY: "ARS",
     MIN_AMOUNT: 500,
     MAX_AMOUNT: 5000000,
-    DEFAULT_SUGGESTED_AMOUNTS: [50000, 100000, 200000],
   };
 
   const GIFT_ORDER = [
@@ -66,10 +65,6 @@
       icon: gift.icon,
       targetAmount: Number(gift.target_amount || 0),
       raisedAmount: Number(raisedAmount || 0),
-      suggestedAmounts:
-        Array.isArray(gift.suggested_amounts) && gift.suggested_amounts.length > 0
-          ? gift.suggested_amounts
-          : CONFIG.DEFAULT_SUGGESTED_AMOUNTS,
     };
   }
 
@@ -99,7 +94,7 @@
     const [{ data: gifts, error: giftsError }, donations] = await Promise.all([
       supabaseClient
         .from("gifts")
-        .select("id, name, icon, target_amount, suggested_amounts")
+        .select("id, name, icon, target_amount")
         .in("id", GIFT_ORDER),
       getDonations(),
     ]);
@@ -239,7 +234,6 @@
   const modalProgress = document.getElementById("modalProgress");
   const modalProgressFill = document.getElementById("modalProgressFill");
   const modalProgressText = document.getElementById("modalProgressText");
-  const amountOptions = document.getElementById("amountOptions");
   const customAmountInput = document.getElementById("customAmount");
   const guestNameInput = document.getElementById("guestName");
   const guestMessageInput = document.getElementById("guestMessage");
@@ -263,10 +257,6 @@
     modalProgressText.textContent = hasGoal
       ? `Objetivo: ${formatMoney(gift.targetAmount)} · ${percent}%`
       : "Sin objetivo determinado";
-
-    amountOptions.innerHTML = gift.suggestedAmounts
-      .map((amt) => `<button type="button" class="amount-chip" data-amount="${amt}">${formatMoney(amt)}</button>`)
-      .join("") + '<button type="button" class="amount-chip amount-chip--custom" data-custom-amount>Otro monto</button>';
 
     customAmountInput.value = "";
     guestNameInput.value = "";
@@ -294,32 +284,10 @@
     modalError.textContent = msg;
   }
 
-  amountOptions.addEventListener("click", (e) => {
-    const chip = e.target.closest(".amount-chip");
-    if (!chip) return;
-
-    amountOptions.querySelectorAll(".amount-chip").forEach((c) => c.classList.remove("is-selected"));
-    chip.classList.add("is-selected");
-
-    if (chip.hasAttribute("data-custom-amount")) {
-      selectedAmount = Number(customAmountInput.value) || null;
-      customAmountInput.focus();
-      hideError();
-      return;
-    }
-
-    selectedAmount = Number(chip.dataset.amount);
-    customAmountInput.value = "";
-    hideError();
-  });
-
   customAmountInput.addEventListener("input", () => {
     const val = Number(customAmountInput.value);
     if (val > 0) {
       selectedAmount = val;
-      amountOptions.querySelectorAll(".amount-chip").forEach((c) => c.classList.remove("is-selected"));
-      const customChip = amountOptions.querySelector("[data-custom-amount]");
-      if (customChip) customChip.classList.add("is-selected");
       hideError();
     } else {
       selectedAmount = null;

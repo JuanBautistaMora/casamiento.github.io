@@ -42,21 +42,20 @@ insert into public.gifts (
   suggested_amounts
 )
 values
-  ('juego-comedor', 'Juego de comedor', null, '🍽️', 2100000, 0, array[50000,100000,200000]::numeric[]),
-  ('sillon', 'Sillón', null, '🛋️', 1900000, 0, array[50000,100000,200000]::numeric[]),
-  ('vajilla-completa', 'Vajilla completa', null, '🥂', 450000, 0, array[50000,100000,200000]::numeric[]),
-  ('mesas-luz', 'Mesas de luz', null, '🌙', 390000, 0, array[50000,100000,200000]::numeric[]),
-  ('sommier', 'Sommier', null, '🛏️', 1600000, 0, array[50000,100000,200000]::numeric[]),
-  ('ropa-cama', 'Ropa de cama', null, '🧺', 350000, 0, array[50000,100000,200000]::numeric[]),
-  ('ramo-novia', 'Ramo de novia', null, '💐', 290000, 0, array[50000,100000,200000]::numeric[]),
-  ('flores-iglesia', 'Flores de la iglesia', null, '⛪', 580000, 0, array[50000,100000,200000]::numeric[]),
-  ('alianzas', 'Alianzas', null, '💍', 1200000, 0, array[50000,100000,200000]::numeric[]),
-  ('fondo-novios', 'Fondo para los novios', null, '💌', 0, 0, array[50000,100000,200000]::numeric[]),
-  ('luna-miel', 'Luna de Miel', null, '✈️', 0, 0, array[50000,100000,200000]::numeric[])
+  ('juego-comedor', 'Juego de comedor', null, '🍽️', 2100000, 0, '{}'::numeric[]),
+  ('sillon', 'Sillón', null, '🛋️', 1900000, 0, '{}'::numeric[]),
+  ('vajilla-completa', 'Vajilla completa', null, '🥂', 450000, 0, '{}'::numeric[]),
+  ('mesas-luz', 'Mesas de luz', null, '🌙', 390000, 0, '{}'::numeric[]),
+  ('sommier', 'Sommier', null, '🛏️', 1600000, 0, '{}'::numeric[]),
+  ('ropa-cama', 'Ropa de cama', null, '🧺', 350000, 0, '{}'::numeric[]),
+  ('ramo-novia', 'Ramo de novia', null, '💐', 290000, 0, '{}'::numeric[]),
+  ('flores-iglesia', 'Flores de la iglesia', null, '⛪', 580000, 0, '{}'::numeric[]),
+  ('alianzas', 'Alianzas', null, '💍', 1200000, 0, '{}'::numeric[]),
+  ('fondo-novios', 'Fondo para los novios', null, '💌', 0, 0, '{}'::numeric[]),
+  ('luna-miel', 'Luna de Miel', null, '✈️', 0, 0, '{}'::numeric[])
 on conflict (id) do update set
   name = excluded.name,
   description = excluded.description,
   icon = excluded.icon,
   target_amount = excluded.target_amount,
   suggested_amounts = excluded.suggested_amounts;
-
