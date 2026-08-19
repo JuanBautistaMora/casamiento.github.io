@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Natalia & Joel — Lista de regalos</title>
-<meta name="description" content="Ayudanos a construir nuestra nueva vida juntos. Elegí un regalo simbólico para Natalia & Joel.">
+<meta name="description" content="Ayudanos a construir el futuro hogar de Natalia y Joel con el aporte que quieras.">
 
 <!-- Tipografías: Cormorant Garamond (display, romántica) + Jost (utilitaria, limpia) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,9 +50,8 @@
 
   <p class="hero__date">12 de diciembre de 2026 · Ascochinga, Córdoba</p>
   <p class="hero__welcome">
-    Gracias por acompañarnos en este nuevo capítulo. En vez de regalos tradicionales,
-    preparamos esta pequeña lista de sueños compartidos: elegí el que más te guste
-    y ayudanos a hacerlo realidad, con el monto que quieras.
+    Estamos empezando a construir nuestro futuro hogar. Acá vas a encontrar algunas de las
+    cosas que necesitamos y podés ayudarnos regalándonos un pedacito de ellas.
   </p>
   <a href="#regalos" class="btn btn--ghost hero__cta">Ver los regalos ↓</a>
 </header>
@@ -64,10 +63,9 @@
 <section class="gifts" id="regalos">
   <div class="section-heading">
     <p class="section-heading__eyebrow">Lista de regalos</p>
-    <h2 class="section-heading__title">Elegí un sueño para ayudarnos a cumplir</h2>
     <p class="section-heading__subtitle">
-      Cada aporte, grande o chico, suma directo al objetivo. Podés donar de forma anónima
-      o dejarnos un mensaje lindo para el día especial.
+      Cada regalo tiene un objetivo y podés regalarnos el pedacito que quieras. Todos los
+      aportes, grandes o pequeños, nos ayudan a acercarnos a él.
     </p>
   </div>
 
@@ -95,9 +93,8 @@
 
     <p class="modal__eyebrow">Regalar</p>
     <h3 class="modal__title" id="modalTitle">—</h3>
-    <p class="modal__gift-desc" id="modalGiftDesc">—</p>
 
-    <div class="modal__progress-mini">
+    <div class="modal__progress-mini" id="modalProgress">
       <div class="progress-bar progress-bar--mini">
         <div class="progress-bar__fill" id="modalProgressFill"></div>
       </div>
@@ -107,14 +104,16 @@
     <div class="transfer-box">
       <p class="transfer-box__title">Datos para transferir</p>
       <div class="transfer-box__row">
-        <span>Alias</span>
-        <strong>ALIAS.DE.LOS.NOVIOS</strong>
+        <span class="transfer-box__label">Alias</span>
+        <strong>nataliayjoel</strong>
+        <button type="button" class="copy-button" data-copy-value="nataliayjoel" aria-label="Copiar alias">Copiar</button>
       </div>
       <div class="transfer-box__row">
-        <span>CBU/CVU</span>
-        <strong>0000000000000000000000</strong>
+        <span class="transfer-box__label">CVU</span>
+        <strong>0000003100075626344292</strong>
+        <button type="button" class="copy-button" data-copy-value="0000003100075626344292" aria-label="Copiar CVU">Copiar</button>
       </div>
-      <p class="transfer-box__note">Después de transferir, cargá abajo el monto que enviaste y dejá tu mensaje.</p>
+      <p class="transfer-box__note">Después de transferir, indicá abajo el monto que enviaste y, si querés, dejanos un mensaje.</p>
     </div>
 
     <form id="donationForm" novalidate>
@@ -125,13 +124,13 @@
         </div>
         <label class="modal__field" for="customAmount">
           O ingresá otro monto
-          <input type="number" min="500" step="500" id="customAmount" name="customAmount" placeholder="Ej: 15000">
+          <input type="number" min="500" max="5000000" step="500" id="customAmount" name="customAmount" inputmode="numeric" placeholder="Ej: 15000">
         </label>
       </fieldset>
 
       <label class="modal__field" for="guestName">
         Tu nombre <span class="modal__optional">(opcional)</span>
-        <input type="text" id="guestName" name="guestName" placeholder="¿Cómo querés que aparezcas?">
+        <input type="text" id="guestName" name="guestName" maxlength="80" autocomplete="name" placeholder="¿Cómo querés que aparezcas?">
       </label>
 
       <label class="modal__field" for="guestMessage">
@@ -142,11 +141,11 @@
       <p class="modal__error" id="modalError" role="alert" hidden></p>
 
       <button type="submit" class="btn btn--primary modal__submit" id="continueToPayment">
-        Confirmar aporte
+        Ya transferí este monto
       </button>
       <p class="modal__disclaimer">
-        Al confirmar, el monto se suma a la barra y tu mensaje aparece en la página.
-        Reemplazá el alias y CBU/CVU por los datos reales de los novios.
+        El aporte quedará pendiente hasta que verifiquemos la transferencia. Una vez confirmado,
+        se actualizará el porcentaje y se publicará tu mensaje.
       </p>
     </form>
   </div>
@@ -198,7 +197,7 @@
   </div>
   <p class="footer__names">Natalia &amp; Joel</p>
   <p class="footer__note">12 de diciembre de 2026 · Ascochinga, Córdoba · Gracias por ser parte</p>
-  <p class="footer__legal">Los aportes se realizan por transferencia. Esta página solo registra el monto informado y los mensajes de los invitados.</p>
+  <p class="footer__legal">Los aportes se realizan por transferencia. El porcentaje se actualiza únicamente con transferencias confirmadas.</p>
 </footer>
 
 <!-- Toast de confirmación (feedback visual liviano, sin backend) -->
