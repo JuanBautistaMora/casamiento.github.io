@@ -149,7 +149,7 @@
       <div class="gift-card__icon" aria-hidden="true">${gift.icon || "💌"}</div>
       <h3 class="gift-card__name">${escapeHtml(gift.name)}</h3>
       ${hasGoal ? `
-        <p class="gift-card__goal">Objetivo: <strong>${formatMoney(gift.targetAmount)}</strong> · <strong>${percent}%</strong></p>
+        <p class="gift-card__goal">Objetivo: <strong>${formatMoney(gift.targetAmount)}</strong> · <strong>${percent}% completado</strong></p>
         <div class="progress-bar" role="progressbar" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de ${escapeHtml(gift.name)}">
           <div class="progress-bar__fill" style="width:${percent}%"></div>
         </div>
@@ -255,7 +255,7 @@
     modalProgressFill.parentElement.hidden = !hasGoal;
     modalProgress.classList.toggle("modal__progress-mini--open", !hasGoal);
     modalProgressText.textContent = hasGoal
-      ? `Objetivo: ${formatMoney(gift.targetAmount)} · ${percent}%`
+      ? `Objetivo: ${formatMoney(gift.targetAmount)} · ${percent}% completado`
       : "Sin objetivo determinado";
 
     customAmountInput.value = "";
