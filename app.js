@@ -8,7 +8,24 @@
     SUPABASE_URL: "https://qdcezlxwnnfjwhceoybe.supabase.co",
     SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2V6bHh3bm5mandoY2VveWJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NTkxNzEsImV4cCI6MjA5OTEzNTE3MX0.ubCmhihpJ5uUNDKFVoljcLtYuAGZ0IaMq8Jxm6qYx_U",
     CURRENCY: "ARS",
+    MIN_AMOUNT: 500,
+    MAX_AMOUNT: 5000000,
   };
+
+  const GIFT_ORDER = [
+    "juego-comedor",
+    "sillon",
+    "vajilla-completa",
+    "mesas-luz",
+    "sommier",
+    "ropa-cama",
+    "ramo-novia",
+    "flores-iglesia",
+    "alianzas",
+    "fondo-novios",
+    "luna-miel",
+  ];
+  const giftOrderIndex = new Map(GIFT_ORDER.map((id, index) => [id, index]));
 
   const supabaseClient = window.supabase.createClient(
     CONFIG.SUPABASE_URL,
@@ -45,11 +62,9 @@
     return {
       id: gift.id,
       name: gift.name,
-      description: gift.description,
       icon: gift.icon,
       targetAmount: Number(gift.target_amount || 0),
       raisedAmount: Number(raisedAmount || 0),
-      suggestedAmounts: gift.suggested_amounts || [],
     };
   }
 
@@ -77,7 +92,10 @@
 
   async function getGifts() {
     const [{ data: gifts, error: giftsError }, donations] = await Promise.all([
-      supabaseClient.from("gifts").select("id, name, description, icon, target_amount, suggested_amounts, created_at").order("created_at", { ascending: true }),
+      supabaseClient
+        .from("gifts")
+        .select("id, name, icon, target_amount")
+        .in("id", GIFT_ORDER),
       getDonations(),
     ]);
 
@@ -89,12 +107,16 @@
     }, {});
 
     donationsState = donations;
-    return (gifts || []).map((gift) => normalizeGift(gift, totalsByGift[gift.id] || 0));
+    return (gifts || [])
+      .map((gift) => normalizeGift(gift, totalsByGift[gift.id] || 0))
+      .sort((a, b) => giftOrderIndex.get(a.id) - giftOrderIndex.get(b.id));
   }
 
   async function createDonation({ giftId, amount, guestName, message }) {
     if (!giftId) throw new Error("Falta el regalo seleccionado.");
-    if (!amount || amount < 500) throw new Error("El monto mínimo es $500.");
+    if (!amount || amount < CONFIG.MIN_AMOUNT || amount > CONFIG.MAX_AMOUNT) {
+      throw new Error("El monto ingresado está fuera del rango permitido.");
+    }
 
     const { error } = await supabaseClient.from("donations").insert({
       gift_id: giftId,
@@ -115,31 +137,25 @@
 
   function createGiftCard(gift) {
     const percent = calcPercent(gift);
-    const isComplete = percent >= 100;
+    const hasGoal = gift.targetAmount > 0;
+    const isComplete = hasGoal && percent >= 100;
 
     const card = document.createElement("article");
-    card.className = "gift-card";
+    card.className = `gift-card${hasGoal ? "" : " gift-card--open"}`;
     card.dataset.giftId = gift.id;
 
     card.innerHTML = `
       ${isComplete ? `<span class="gift-card__badge">Completo 🎉</span>` : ""}
       <div class="gift-card__icon" aria-hidden="true">${gift.icon || "💌"}</div>
       <h3 class="gift-card__name">${escapeHtml(gift.name)}</h3>
-      <p class="gift-card__desc">${escapeHtml(gift.description)}</p>
-
-      <div class="gift-card__amounts">
-        <span class="gift-card__raised">${formatMoney(gift.raisedAmount)}</span>
-        <span>de ${formatMoney(gift.targetAmount)}</span>
-      </div>
-
-      <div class="progress-bar" role="progressbar" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de ${escapeHtml(gift.name)}">
-        <div class="progress-bar__fill" style="width:${percent}%"></div>
-      </div>
-
-      <div class="gift-card__progress-footer">
-        <span class="gift-card__percent">${percent}% cumplido</span>
-        <span>${percent >= 100 ? "¡Gracias! 💛" : "Cada aporte suma"}</span>
-      </div>
+      ${hasGoal ? `
+        <p class="gift-card__goal">Objetivo: <strong>${formatMoney(gift.targetAmount)}</strong> · <strong>${percent}% completado</strong></p>
+        <div class="progress-bar" role="progressbar" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de ${escapeHtml(gift.name)}">
+          <div class="progress-bar__fill" style="width:${percent}%"></div>
+        </div>
+      ` : `
+        <p class="gift-card__goal gift-card__goal--open">Sin objetivo determinado</p>
+      `}
 
       <button class="btn btn--primary gift-card__cta" data-action="open-donate" data-gift-id="${gift.id}">
         Regalar
@@ -151,6 +167,15 @@
 
   function renderGiftsFromState() {
     giftsGrid.innerHTML = "";
+
+    if (giftsState.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "gifts__loading";
+      empty.textContent = "Todavía no hay regalos disponibles.";
+      giftsGrid.appendChild(empty);
+      return;
+    }
+
     const fragment = document.createDocumentFragment();
     giftsState.forEach((gift) => fragment.appendChild(createGiftCard(gift)));
     giftsGrid.appendChild(fragment);
@@ -206,10 +231,9 @@
   const modalOverlay = document.getElementById("donationModal");
   const modalClose = document.getElementById("modalClose");
   const modalTitle = document.getElementById("modalTitle");
-  const modalGiftDesc = document.getElementById("modalGiftDesc");
+  const modalProgress = document.getElementById("modalProgress");
   const modalProgressFill = document.getElementById("modalProgressFill");
   const modalProgressText = document.getElementById("modalProgressText");
-  const amountOptions = document.getElementById("amountOptions");
   const customAmountInput = document.getElementById("customAmount");
   const guestNameInput = document.getElementById("guestName");
   const guestMessageInput = document.getElementById("guestMessage");
@@ -225,14 +249,14 @@
     selectedAmount = null;
 
     const percent = calcPercent(gift);
+    const hasGoal = gift.targetAmount > 0;
     modalTitle.textContent = gift.name;
-    modalGiftDesc.textContent = gift.description;
     modalProgressFill.style.width = percent + "%";
-    modalProgressText.textContent = `${percent}% · ${formatMoney(gift.raisedAmount)} de ${formatMoney(gift.targetAmount)}`;
-
-    amountOptions.innerHTML = gift.suggestedAmounts
-      .map((amt) => `<button type="button" class="amount-chip" data-amount="${amt}">${formatMoney(amt)}</button>`)
-      .join("");
+    modalProgressFill.parentElement.hidden = !hasGoal;
+    modalProgress.classList.toggle("modal__progress-mini--open", !hasGoal);
+    modalProgressText.textContent = hasGoal
+      ? `Objetivo: ${formatMoney(gift.targetAmount)} · ${percent}% completado`
+      : "Sin objetivo determinado";
 
     customAmountInput.value = "";
     guestNameInput.value = "";
@@ -260,22 +284,13 @@
     modalError.textContent = msg;
   }
 
-  amountOptions.addEventListener("click", (e) => {
-    const chip = e.target.closest(".amount-chip");
-    if (!chip) return;
-    selectedAmount = Number(chip.dataset.amount);
-    customAmountInput.value = "";
-    amountOptions.querySelectorAll(".amount-chip").forEach((c) => c.classList.remove("is-selected"));
-    chip.classList.add("is-selected");
-    hideError();
-  });
-
   customAmountInput.addEventListener("input", () => {
     const val = Number(customAmountInput.value);
     if (val > 0) {
       selectedAmount = val;
-      amountOptions.querySelectorAll(".amount-chip").forEach((c) => c.classList.remove("is-selected"));
       hideError();
+    } else {
+      selectedAmount = null;
     }
   });
 
@@ -291,8 +306,8 @@
     e.preventDefault();
     hideError();
 
-    if (!selectedAmount || selectedAmount < 500) {
-      showError("Elegí un monto o ingresá uno personalizado de al menos $500.");
+    if (!selectedAmount || selectedAmount < CONFIG.MIN_AMOUNT || selectedAmount > CONFIG.MAX_AMOUNT) {
+      showError("Ingresá un monto entre $500 y $5.000.000.");
       return;
     }
 
@@ -315,7 +330,7 @@
       showError("No se pudo guardar. Revisá las políticas de Supabase o intentá de nuevo.");
     } finally {
       continueBtn.disabled = false;
-      continueBtn.textContent = "Confirmar transferencia";
+      continueBtn.textContent = "Confirmar aporte";
     }
   });
 
@@ -333,6 +348,42 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 3800);
   }
+
+  async function copyText(value) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+
+  document.addEventListener("click", async (e) => {
+    const copyButton = e.target.closest("[data-copy-value]");
+    if (!copyButton) return;
+
+    const originalLabel = copyButton.textContent;
+    try {
+      await copyText(copyButton.dataset.copyValue);
+      copyButton.textContent = "¡Copiado!";
+      copyButton.classList.add("is-copied");
+      setTimeout(() => {
+        copyButton.textContent = originalLabel;
+        copyButton.classList.remove("is-copied");
+      }, 1800);
+    } catch (err) {
+      console.error(err);
+      showToast("No se pudo copiar. Mantené presionado el dato para copiarlo.");
+    }
+  });
 
   function subscribeToRealtime() {
     supabaseClient
