@@ -182,14 +182,12 @@
   }
 
   function createMessageCard(donation) {
-    const gift = giftsState.find((g) => g.id === donation.giftId);
     const el = document.createElement("article");
     el.className = "message-card";
     el.innerHTML = `
       <p class="message-card__quote">“${escapeHtml(donation.message)}”</p>
       <div class="message-card__meta">
         <span class="message-card__name">${escapeHtml(donation.guestName || "Anónimo")}</span>
-        <span>${gift ? escapeHtml(gift.name) : ""}</span>
       </div>
     `;
     return el;
@@ -240,6 +238,65 @@
   const donationForm = document.getElementById("donationForm");
   const modalError = document.getElementById("modalError");
   const continueBtn = document.getElementById("continueToPayment");
+  const modalEyebrow = modalOverlay.querySelector(".modal__eyebrow");
+  const modalDialog = modalOverlay.querySelector(".modal");
+  const transferBox = modalOverlay.querySelector(".transfer-box");
+  const transferNote = transferBox.querySelector(".transfer-box__note");
+
+  const transferStep = document.createElement("section");
+  transferStep.className = "modal__transfer-step";
+  transferStep.hidden = true;
+  transferStep.setAttribute("aria-label", "Datos para transferir");
+
+  const transferSummary = document.createElement("p");
+  transferSummary.className = "transfer-step__summary";
+
+  const transferError = document.createElement("p");
+  transferError.className = "transfer-step__error";
+  transferError.setAttribute("role", "alert");
+  transferError.hidden = true;
+
+  const transferActions = document.createElement("div");
+  transferActions.className = "transfer-step__actions";
+
+  const closeTransferBtn = document.createElement("button");
+  closeTransferBtn.type = "button";
+  closeTransferBtn.className = "btn btn--primary";
+  closeTransferBtn.textContent = "Cerrar";
+
+  modalDialog.insertBefore(transferStep, transferBox);
+  transferActions.append(closeTransferBtn);
+  transferStep.append(transferSummary, transferBox, transferError, transferActions);
+
+  function hideTransferError() {
+    transferError.hidden = true;
+    transferError.textContent = "";
+  }
+
+  function showTransferError(message) {
+    transferError.hidden = false;
+    transferError.textContent = message;
+  }
+
+  function showAmountStep(focus = true) {
+    transferStep.hidden = true;
+    donationForm.hidden = false;
+    modalEyebrow.textContent = "Regalar";
+    continueBtn.textContent = "Confirmar monto";
+    hideTransferError();
+    if (focus) requestAnimationFrame(() => customAmountInput.focus());
+  }
+
+  function showTransferStep() {
+    const gift = giftsState.find((item) => item.id === selectedGiftId);
+    donationForm.hidden = true;
+    transferStep.hidden = false;
+    modalEyebrow.textContent = "Transferencia";
+    transferSummary.textContent = `Vas a transferir ${formatMoney(selectedAmount)} para ${gift ? gift.name : "este regalo"}.`;
+    transferNote.textContent = "El aporte ya quedó registrado. Usá estos datos para realizar la transferencia.";
+    hideTransferError();
+    requestAnimationFrame(() => closeTransferBtn.focus());
+  }
 
   function openModal(giftId) {
     const gift = giftsState.find((g) => g.id === giftId);
@@ -262,16 +319,21 @@
     guestNameInput.value = "";
     guestMessageInput.value = "";
     hideError();
+    hideTransferError();
+    showAmountStep(false);
 
     modalOverlay.classList.add("is-open");
     modalOverlay.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    modalDialog.scrollTop = 0;
+    requestAnimationFrame(() => customAmountInput.focus());
   }
 
   function closeModal() {
     modalOverlay.classList.remove("is-open");
     modalOverlay.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+    showAmountStep(false);
   }
 
   function hideError() {
@@ -322,17 +384,20 @@
         message: guestMessageInput.value.trim(),
       });
 
-      closeModal();
-      showToast("¡Gracias! Tu aporte y mensaje ya quedaron registrados 💛");
-      await refreshPageData();
+      showTransferStep();
+      modalDialog.scrollTop = 0;
+      showToast("Aporte registrado. Ahora podés realizar la transferencia.");
+      refreshPageData().catch((err) => console.error(err));
     } catch (err) {
       console.error(err);
-      showError("No se pudo guardar. Revisá las políticas de Supabase o intentá de nuevo.");
+      showError("No se pudo registrar el aporte. Revisá las políticas de Supabase o intentá de nuevo.");
     } finally {
       continueBtn.disabled = false;
-      continueBtn.textContent = "Confirmar aporte";
+      continueBtn.textContent = "Confirmar monto";
     }
   });
+
+  closeTransferBtn.addEventListener("click", closeModal);
 
   giftsGrid.addEventListener("click", (e) => {
     const btn = e.target.closest('[data-action="open-donate"]');
@@ -399,6 +464,14 @@
         () => refreshPageData()
       )
       .subscribe();
+  }
+
+  const footer = document.querySelector(".footer");
+  if (footer && !footer.querySelector(".footer__credit")) {
+    const credit = document.createElement("p");
+    credit.className = "footer__credit";
+    credit.textContent = "Hecho por Juan Bautista Mora";
+    footer.appendChild(credit);
   }
 
   initPage();
