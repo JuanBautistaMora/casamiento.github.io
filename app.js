@@ -261,18 +261,13 @@
   const transferActions = document.createElement("div");
   transferActions.className = "transfer-step__actions";
 
-  const confirmTransferBtn = document.createElement("button");
-  confirmTransferBtn.type = "button";
-  confirmTransferBtn.className = "btn btn--primary";
-  confirmTransferBtn.textContent = "Ya transferí — confirmar aporte";
-
-  const backToAmountBtn = document.createElement("button");
-  backToAmountBtn.type = "button";
-  backToAmountBtn.className = "btn btn--ghost";
-  backToAmountBtn.textContent = "Cambiar monto";
+  const closeTransferBtn = document.createElement("button");
+  closeTransferBtn.type = "button";
+  closeTransferBtn.className = "btn btn--primary";
+  closeTransferBtn.textContent = "Cerrar";
 
   modalDialog.insertBefore(transferStep, transferBox);
-  transferActions.append(confirmTransferBtn, backToAmountBtn);
+  transferActions.append(closeTransferBtn);
   transferStep.append(transferSummary, transferBox, transferError, transferActions);
 
   function hideTransferError() {
@@ -300,10 +295,9 @@
     transferStep.hidden = false;
     modalEyebrow.textContent = "Transferencia";
     transferSummary.textContent = `Vas a transferir ${formatMoney(selectedAmount)} para ${gift ? gift.name : "este regalo"}.`;
-    transferNote.textContent = "Realizá la transferencia y después tocá «Ya transferí» para registrar el aporte.";
-    confirmTransferBtn.textContent = "Ya transferí — confirmar aporte";
+    transferNote.textContent = "El aporte ya quedó registrado. Usá estos datos para realizar la transferencia.";
     hideTransferError();
-    requestAnimationFrame(() => confirmTransferBtn.focus());
+    requestAnimationFrame(() => closeTransferBtn.focus());
   }
 
   function openModal(giftId) {
@@ -372,7 +366,7 @@
     if (e.key === "Escape" && modalOverlay.classList.contains("is-open")) closeModal();
   });
 
-  donationForm.addEventListener("submit", (e) => {
+  donationForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     hideError();
 
@@ -381,19 +375,8 @@
       return;
     }
 
-    showTransferStep();
-    modalDialog.scrollTop = 0;
-  });
-
-  backToAmountBtn.addEventListener("click", () => {
-    showAmountStep();
-    modalDialog.scrollTop = 0;
-  });
-
-  confirmTransferBtn.addEventListener("click", async () => {
-    hideTransferError();
-    confirmTransferBtn.disabled = true;
-    confirmTransferBtn.textContent = "Guardando…";
+    continueBtn.disabled = true;
+    continueBtn.textContent = "Guardando…";
 
     try {
       await createDonation({
@@ -403,17 +386,20 @@
         message: guestMessageInput.value.trim(),
       });
 
-      closeModal();
-      showToast("¡Gracias! Tu aporte y mensaje quedaron registrados 💛");
-      await refreshPageData();
+      showTransferStep();
+      modalDialog.scrollTop = 0;
+      showToast("Aporte registrado. Ahora podés realizar la transferencia.");
+      refreshPageData().catch((err) => console.error(err));
     } catch (err) {
       console.error(err);
-      showTransferError("No se pudo guardar. Revisá las políticas de Supabase o intentá de nuevo.");
+      showError("No se pudo registrar el aporte. Revisá las políticas de Supabase o intentá de nuevo.");
     } finally {
-      confirmTransferBtn.disabled = false;
-      confirmTransferBtn.textContent = "Ya transferí — confirmar aporte";
+      continueBtn.disabled = false;
+      continueBtn.textContent = "Confirmar monto";
     }
   });
+
+  closeTransferBtn.addEventListener("click", closeModal);
 
   giftsGrid.addEventListener("click", (e) => {
     const btn = e.target.closest('[data-action="open-donate"]');
