@@ -240,6 +240,71 @@
   const donationForm = document.getElementById("donationForm");
   const modalError = document.getElementById("modalError");
   const continueBtn = document.getElementById("continueToPayment");
+  const modalEyebrow = modalOverlay.querySelector(".modal__eyebrow");
+  const modalDialog = modalOverlay.querySelector(".modal");
+  const transferBox = modalOverlay.querySelector(".transfer-box");
+  const transferNote = transferBox.querySelector(".transfer-box__note");
+
+  const transferStep = document.createElement("section");
+  transferStep.className = "modal__transfer-step";
+  transferStep.hidden = true;
+  transferStep.setAttribute("aria-label", "Datos para transferir");
+
+  const transferSummary = document.createElement("p");
+  transferSummary.className = "transfer-step__summary";
+
+  const transferError = document.createElement("p");
+  transferError.className = "transfer-step__error";
+  transferError.setAttribute("role", "alert");
+  transferError.hidden = true;
+
+  const transferActions = document.createElement("div");
+  transferActions.className = "transfer-step__actions";
+
+  const confirmTransferBtn = document.createElement("button");
+  confirmTransferBtn.type = "button";
+  confirmTransferBtn.className = "btn btn--primary";
+  confirmTransferBtn.textContent = "Ya transferí — confirmar aporte";
+
+  const backToAmountBtn = document.createElement("button");
+  backToAmountBtn.type = "button";
+  backToAmountBtn.className = "btn btn--ghost";
+  backToAmountBtn.textContent = "Cambiar monto";
+
+  modalDialog.insertBefore(transferStep, transferBox);
+  transferActions.append(confirmTransferBtn, backToAmountBtn);
+  transferStep.append(transferSummary, transferBox, transferError, transferActions);
+
+  function hideTransferError() {
+    transferError.hidden = true;
+    transferError.textContent = "";
+  }
+
+  function showTransferError(message) {
+    transferError.hidden = false;
+    transferError.textContent = message;
+  }
+
+  function showAmountStep(focus = true) {
+    transferStep.hidden = true;
+    donationForm.hidden = false;
+    modalEyebrow.textContent = "Regalar";
+    continueBtn.textContent = "Confirmar monto";
+    hideTransferError();
+    if (focus) requestAnimationFrame(() => customAmountInput.focus());
+  }
+
+  function showTransferStep() {
+    const gift = giftsState.find((item) => item.id === selectedGiftId);
+    donationForm.hidden = true;
+    transferStep.hidden = false;
+    modalEyebrow.textContent = "Transferencia";
+    transferSummary.textContent = `Vas a transferir ${formatMoney(selectedAmount)} para ${gift ? gift.name : "este regalo"}.`;
+    transferNote.textContent = "Realizá la transferencia y después tocá «Ya transferí» para registrar el aporte.";
+    confirmTransferBtn.textContent = "Ya transferí — confirmar aporte";
+    hideTransferError();
+    requestAnimationFrame(() => confirmTransferBtn.focus());
+  }
 
   function openModal(giftId) {
     const gift = giftsState.find((g) => g.id === giftId);
@@ -262,16 +327,21 @@
     guestNameInput.value = "";
     guestMessageInput.value = "";
     hideError();
+    hideTransferError();
+    showAmountStep(false);
 
     modalOverlay.classList.add("is-open");
     modalOverlay.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    modalDialog.scrollTop = 0;
+    requestAnimationFrame(() => customAmountInput.focus());
   }
 
   function closeModal() {
     modalOverlay.classList.remove("is-open");
     modalOverlay.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+    showAmountStep(false);
   }
 
   function hideError() {
@@ -302,7 +372,7 @@
     if (e.key === "Escape" && modalOverlay.classList.contains("is-open")) closeModal();
   });
 
-  donationForm.addEventListener("submit", async (e) => {
+  donationForm.addEventListener("submit", (e) => {
     e.preventDefault();
     hideError();
 
@@ -311,8 +381,19 @@
       return;
     }
 
-    continueBtn.disabled = true;
-    continueBtn.textContent = "Guardando…";
+    showTransferStep();
+    modalDialog.scrollTop = 0;
+  });
+
+  backToAmountBtn.addEventListener("click", () => {
+    showAmountStep();
+    modalDialog.scrollTop = 0;
+  });
+
+  confirmTransferBtn.addEventListener("click", async () => {
+    hideTransferError();
+    confirmTransferBtn.disabled = true;
+    confirmTransferBtn.textContent = "Guardando…";
 
     try {
       await createDonation({
@@ -323,14 +404,14 @@
       });
 
       closeModal();
-      showToast("¡Gracias! Tu aporte y mensaje ya quedaron registrados 💛");
+      showToast("¡Gracias! Tu aporte y mensaje quedaron registrados 💛");
       await refreshPageData();
     } catch (err) {
       console.error(err);
-      showError("No se pudo guardar. Revisá las políticas de Supabase o intentá de nuevo.");
+      showTransferError("No se pudo guardar. Revisá las políticas de Supabase o intentá de nuevo.");
     } finally {
-      continueBtn.disabled = false;
-      continueBtn.textContent = "Confirmar aporte";
+      confirmTransferBtn.disabled = false;
+      confirmTransferBtn.textContent = "Ya transferí — confirmar aporte";
     }
   });
 
@@ -399,6 +480,14 @@
         () => refreshPageData()
       )
       .subscribe();
+  }
+
+  const footer = document.querySelector(".footer");
+  if (footer && !footer.querySelector(".footer__credit")) {
+    const credit = document.createElement("p");
+    credit.className = "footer__credit";
+    credit.textContent = "Hecho por Juan Bautista Mora";
+    footer.appendChild(credit);
   }
 
   initPage();

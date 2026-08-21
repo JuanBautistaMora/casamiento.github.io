@@ -102,6 +102,7 @@ main, header, footer, .modal-overlay{ position:relative; z-index:1; }
 
 /* ---- Ramas de pino decorativas (elemento firma, estilo acuarela botánica) ---- */
 .pine-corner{
+  display:none;
   position:absolute;
   width:150px;
   height:auto;
@@ -523,6 +524,33 @@ main, header, footer, .modal-overlay{ position:relative; z-index:1; }
   line-height:1.45;
 }
 
+.modal__transfer-step{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.modal__transfer-step[hidden]{ display:none; }
+.modal__transfer-step .transfer-box{ margin-bottom:0; }
+.transfer-step__summary{
+  font-family:var(--font-display);
+  font-size:1.1rem;
+  color:var(--color-charcoal);
+  text-align:center;
+  line-height:1.45;
+}
+.transfer-step__error{
+  color:#a13333;
+  background:#fbe6e6;
+  border-radius:var(--radius-sm);
+  padding:10px 12px;
+  font-size:.84rem;
+}
+.transfer-step__actions{
+  display:grid;
+  gap:10px;
+}
+.transfer-step__actions .btn{ width:100%; }
+
 .modal__amounts legend{
   font-size:.85rem;
   font-weight:500;
@@ -659,6 +687,15 @@ main, header, footer, .modal-overlay{ position:relative; z-index:1; }
 }
 .footer__note{ color:var(--color-charcoal-soft); font-size:.92rem; font-family:var(--font-display); font-style:italic; position:relative; z-index:1; }
 .footer__legal{ color:var(--color-charcoal-soft); font-size:.74rem; opacity:.75; max-width:420px; position:relative; z-index:1; margin-top:6px; }
+.footer__credit{
+  color:var(--color-charcoal-soft);
+  font-size:.7rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  position:relative;
+  z-index:1;
+  margin-top:12px;
+}
 
 @media (max-width:768px){
   body::before{
