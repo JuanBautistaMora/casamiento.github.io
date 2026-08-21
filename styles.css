@@ -640,7 +640,7 @@ main, header, footer, .modal-overlay{ position:relative; z-index:1; }
 }
 .message-card__meta{
   display:flex;
-  justify-content:space-between;
+  justify-content:flex-start;
   align-items:center;
   font-size:.78rem;
   color:var(--color-charcoal-soft);
