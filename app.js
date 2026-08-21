@@ -182,14 +182,12 @@
   }
 
   function createMessageCard(donation) {
-    const gift = giftsState.find((g) => g.id === donation.giftId);
     const el = document.createElement("article");
     el.className = "message-card";
     el.innerHTML = `
       <p class="message-card__quote">“${escapeHtml(donation.message)}”</p>
       <div class="message-card__meta">
         <span class="message-card__name">${escapeHtml(donation.guestName || "Anónimo")}</span>
-        <span>${gift ? escapeHtml(gift.name) : ""}</span>
       </div>
     `;
     return el;
