@@ -581,7 +581,7 @@ main, header, footer, .modal-overlay{ position:relative; z-index:1; }
    MENSAJES DE INVITADOS
    ================================================================== */
 .messages{
-  background:linear-gradient(180deg, transparent, var(--color-blush) 12%, var(--color-blush) 88%, transparent);
+  background:linear-gradient(180deg, transparent 0%, var(--color-blush) 12%, var(--color-blush) 100%);
   padding:70px 24px 90px;
   margin-top:40px;
   position:relative;
