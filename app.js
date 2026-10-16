@@ -153,10 +153,11 @@
         <div class="progress-bar" role="progressbar" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso de ${escapeHtml(gift.name)}">
           <div class="progress-bar__fill" style="width:${percent}%"></div>
         </div>
-      ` : `
-        <p class="gift-card__goal gift-card__goal--open">Sin objetivo determinado</p>
+      ` : gift.id === "fondo-novios" ? `
+        <p class="gift-card__goal gift-card__goal--open"></p>
+      ` : gift.id === "luna-miel" ? "" : `
+        <p class="gift-card__goal gift-card__goal--open"> Destino a definir ¡Se aceptan sugerencias!</p>
       `}
-
       <button class="btn btn--primary gift-card__cta" data-action="open-donate" data-gift-id="${gift.id}">
         Regalar
       </button>
