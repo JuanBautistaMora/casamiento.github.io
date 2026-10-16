@@ -155,9 +155,9 @@
         </div>
       ` : gift.id === "fondo-novios" ? `
         <p class="gift-card__goal gift-card__goal--open"></p>
-      ` : gift.id === "luna-miel" ? "" : `
-        <p class="gift-card__goal gift-card__goal--open"> Destino a definir ¡Se aceptan sugerencias!</p>
-      `}
+      ` : gift.id === "luna-miel" ? `
+        <p class="gift-card__goal gift-card__goal--open">Destino a definir ¡Se aceptan sugerencias!</p>
+      ` : ""}
       <button class="btn btn--primary gift-card__cta" data-action="open-donate" data-gift-id="${gift.id}">
         Regalar
       </button>
